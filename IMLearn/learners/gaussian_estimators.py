@@ -1,4 +1,7 @@
 from __future__ import annotations
+
+import math
+
 import numpy as np
 from numpy.linalg import inv, det, slogdet
 
@@ -7,7 +10,8 @@ class UnivariateGaussian:
     """
     Class for univariate Gaussian Distribution Estimator
     """
-    def __init__(self, biased_var: bool = False) -> UnivariateGaussian:
+
+    def __init__(self, biased_var: bool = False) -> None:
         """
         Estimator for univariate Gaussian mean and variance parameters
 
@@ -32,6 +36,7 @@ class UnivariateGaussian:
         """
         self.biased_ = biased_var
         self.fitted_, self.mu_, self.var_ = False, None, None
+        return
 
     def fit(self, X: np.ndarray) -> UnivariateGaussian:
         """
@@ -51,7 +56,8 @@ class UnivariateGaussian:
         Sets `self.mu_`, `self.var_` attributes according to calculated estimation (where
         estimator is either biased or unbiased). Then sets `self.fitted_` attribute to `True`
         """
-        raise NotImplementedError()
+        self.mu_ = np.nanmean(X, axis=0)
+        self.var_ = np.nanstd(X)
 
         self.fitted_ = True
         return self
@@ -76,7 +82,21 @@ class UnivariateGaussian:
         """
         if not self.fitted_:
             raise ValueError("Estimator must first be fitted before calling `pdf` function")
-        raise NotImplementedError()
+
+        def gaussian_pdf_function(x):
+            return 1 / (np.sqrt(2 * np.pi * self.var_)) * \
+                    np.exp(- 1 * (x - self.mu_) ** 2 / (2 * self.var_))
+
+        pdf_array = np.zeros(len(X))
+        for index, x in enumerate(X):
+            pdf_array[index] = gaussian_pdf_function(x)
+        return pdf_array
+
+    def get_mean(self):
+        return self.mu_
+
+    def get_var(self):
+        return self.var_
 
     @staticmethod
     def log_likelihood(mu: float, sigma: float, X: np.ndarray) -> float:
@@ -97,13 +117,18 @@ class UnivariateGaussian:
         log_likelihood: float
             log-likelihood calculated
         """
-        raise NotImplementedError()
+        each_variable_computation = lambda x: (x - mu) ** 2
+        return_factor = - 1 / (2 * sigma ** 2)
+        X = list(map(each_variable_computation, X))
+        multiple_factor = np.log(1 / (np.sqrt(2 * np.pi * sigma) ** len(X)))
+        return multiple_factor + return_factor * sum(X)
 
 
 class MultivariateGaussian:
     """
     Class for multivariate Gaussian Distribution Estimator
     """
+
     def __init__(self):
         """
         Initialize an instance of multivariate Gaussian estimator
@@ -143,7 +168,18 @@ class MultivariateGaussian:
         Sets `self.mu_`, `self.cov_` attributes according to calculated estimation.
         Then sets `self.fitted_` attribute to `True`
         """
-        raise NotImplementedError()
+
+        self.cov_ = np.cov(X, rowvar=False)
+        self.mu_ = np.mean(X, axis=0)
+
+        # def calculate_mean(X: np.ndarray, index):
+        #     sum = 0
+        #     for i in range(len(X)):
+        #         sum += X[i][index]
+        #     return sum / len(X)
+        #
+        # for i in range(len(X[0])):
+        #     self.mu_[i] = calculate_mean(X, i)
 
         self.fitted_ = True
         return self
@@ -168,7 +204,15 @@ class MultivariateGaussian:
         """
         if not self.fitted_:
             raise ValueError("Estimator must first be fitted before calling `pdf` function")
-        raise NotImplementedError()
+
+        def gaussian_pdf_function(x: np.ndarray):
+            return 1 / (np.sqrt((2 * np.pi) ** len(X) * det(self.cov_))) * \
+                np.exp(-0.5 * np.transpose(X - self.mu_).dot(inv(self.cov_)).dot(X - self.mu_))
+
+        pdf_array = np.zeros(len(X))
+        for index, x in enumerate(X):
+            pdf_array[index] = gaussian_pdf_function(x)
+        return pdf_array
 
     @staticmethod
     def log_likelihood(mu: np.ndarray, cov: np.ndarray, X: np.ndarray) -> float:
@@ -189,4 +233,18 @@ class MultivariateGaussian:
         log_likelihood: float
             log-likelihood calculated
         """
-        raise NotImplementedError()
+        each_variable_computation = lambda x: (np.transpose(x - mu)).dot(inv(cov)).dot(x - mu)
+        dim_factor = len(X) * np.log(1 / (np.sqrt((2 * np.pi) ** len(X[0])) * det(cov)))
+
+        # Activate the vfunc on all matrix rows.
+        vfunc = np.vectorize(each_variable_computation, signature='(n)->()')
+        p = vfunc(X)
+        # ATTENTION: debugging here - why is p 2d array??
+
+        return dim_factor - 0.5 * sum(p)
+
+    def get_mu(self):
+        return self.mu_
+
+    def get_cov(self):
+        return self.cov_
