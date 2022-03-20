@@ -170,16 +170,7 @@ class MultivariateGaussian:
         """
 
         self.cov_ = np.cov(X, rowvar=False)
-        self.mu_ = np.mean(X, axis=0)
-
-        # def calculate_mean(X: np.ndarray, index):
-        #     sum = 0
-        #     for i in range(len(X)):
-        #         sum += X[i][index]
-        #     return sum / len(X)
-        #
-        # for i in range(len(X[0])):
-        #     self.mu_[i] = calculate_mean(X, i)
+        self.mu_ = np.nanmean(X, axis=0)
 
         self.fitted_ = True
         return self
@@ -206,8 +197,8 @@ class MultivariateGaussian:
             raise ValueError("Estimator must first be fitted before calling `pdf` function")
 
         def gaussian_pdf_function(x: np.ndarray):
-            return 1 / (np.sqrt((2 * np.pi) ** len(X) * det(self.cov_))) * \
-                np.exp(-0.5 * np.transpose(X - self.mu_).dot(inv(self.cov_)).dot(X - self.mu_))
+            return 1 / (np.sqrt((2 * np.pi) ** len(x) * det(self.cov_))) * \
+                np.exp(-0.5 * np.transpose(x - self.mu_).dot(inv(self.cov_)).dot(x - self.mu_))
 
         pdf_array = np.zeros(len(X))
         for index, x in enumerate(X):
@@ -239,7 +230,6 @@ class MultivariateGaussian:
         # Activate the vfunc on all matrix rows.
         vfunc = np.vectorize(each_variable_computation, signature='(n)->()')
         p = vfunc(X)
-        # ATTENTION: debugging here - why is p 2d array??
 
         return dim_factor - 0.5 * sum(p)
 
