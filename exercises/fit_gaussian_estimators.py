@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 pio.templates.default = "simple_white"
 
 
-PART_2_LINSPACE = np.linspace(-10, 10, 200)
+PART_2_LINSPACE = np.linspace(-10, 10, 21)
 
 
 def test_univariate_gaussian():
@@ -24,12 +24,10 @@ def EX3(model, samples):
     samples = np.sort(samples)
     pdf_array = model.pdf(samples)
 
-    plt.scatter(samples, pdf_array, label="value by pdf")
-    plt.scatter(samples, np.zeros(len(samples)), alpha=0.1, label="heat by amount")
+    plt.scatter(samples, pdf_array)
     plt.xlabel("Value of the sample")
     plt.ylabel("The pdf of the sample")
     plt.title("The pdf of sample in consideration to its value (samples value-sorted)")
-    plt.legend()
     plt.show()
 
 
@@ -38,6 +36,7 @@ def EX2(samples):
     my_gaussian = UnivariateGaussian()
     for i in range(1, 101, 1):
         data = samples[:(i*10)]
+        print(10 * i)
         my_gaussian.fit(data)
         mean[i - 1] = my_gaussian.get_mean()
     mean -= 10
@@ -154,5 +153,5 @@ def quiz_Q_3():
 if __name__ == '__main__':
     np.random.seed(0)
     test_univariate_gaussian()
-    # test_multivariate_gaussian()
+    test_multivariate_gaussian()
     # Max loglikehood chance is: -5985.002059790862, for the vector: [-0.05025125628140792, 0, 3.9698492462311563, 0]
