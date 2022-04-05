@@ -68,6 +68,11 @@ class LinearRegression(BaseEstimator):
             Predicted responses of given samples
         """
         return np.matmul(X, self.coefs_)
+        if self.include_intercept_:
+            x_plus_b = np.concatenate((np.ones((len(X), 1)), X), axis=1)
+            return np.matmul(x_plus_b, self.coefs_)
+        else:
+            return np.matmul(X, self.coefs_)
 
     def _loss(self, X: np.ndarray, y: np.ndarray) -> float:
         """

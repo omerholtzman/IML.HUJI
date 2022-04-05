@@ -1,6 +1,7 @@
 from typing import Tuple
 import numpy as np
 import pandas as pd
+from sklearn.utils import shuffle
 
 
 def split_train_test(X: pd.DataFrame, y: pd.Series, train_proportion: float = .25) \
@@ -33,8 +34,19 @@ def split_train_test(X: pd.DataFrame, y: pd.Series, train_proportion: float = .2
         Responses of test samples
 
     """
-    raise NotImplementedError()
+    df = pd.concat([X, y], axis=1)
+    df = shuffle(df)  # randomizes the dataframe rows
+    train_length = int(train_proportion * len(df))
+    train = df[:train_length]
+    test = df[train_length:]
 
+    Y_train = train['SalePrice']
+    Y_test = test['SalePrice']
+    X_train = train.drop(['SalePrice'], axis=1)
+    X_test = test.drop(['SalePrice'], axis=1)
+
+
+    return X_train, Y_train, X_test, Y_test
 
 def confusion_matrix(a: np.ndarray, b: np.ndarray) -> np.ndarray:
     """
