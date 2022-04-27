@@ -4,6 +4,8 @@ import numpy as np
 from typing import Tuple
 import plotly.graph_objects as go
 import plotly.io as pio
+import plotly.express as px
+import pandas as pd
 from plotly.subplots import make_subplots
 
 import matplotlib.pyplot as plt
@@ -66,19 +68,63 @@ def compare_gaussian_classifiers():
     """
     for f in ["gaussian1.npy", "gaussian2.npy"]:
         # Load dataset
-        X, Y = load_dataset("./datasets/" + f)
+        X, Y = load_dataset("../datasets/" + f)
 
         # Fit models and predict over training set
-        raise NotImplementedError()
+
+        from math import atan2, pi
+        def get_ellipse(mu: np.ndarray, cov: np.ndarray):
+            """
+            Draw an ellipse centered at given location and according to specified covariance matrix
+            Parameters
+            ----------
+            mu : ndarray of shape (2,)
+                Center of ellipse
+            cov: ndarray of shape (2,2)
+                Covariance of Gaussian
+            Returns
+            -------
+                scatter: A plotly trace object of the ellipse
+            """
+            l1, l2 = tuple(np.linalg.eigvalsh(cov)[::-1])
+            theta = atan2(l1 - cov[0, 0], cov[0, 1]) if cov[0, 1] != 0 else (np.pi / 2 if cov[0, 0] < cov[1, 1] else 0)
+            t = np.linspace(0, 2 * pi, 100)
+            xs = (l1 * np.cos(theta) * np.cos(t)) - (l2 * np.sin(theta) * np.sin(t))
+            ys = (l1 * np.sin(theta) * np.cos(t)) + (l2 * np.cos(theta) * np.sin(t))
+
+            return go.Scatter(x=mu[0] + xs, y=mu[1] + ys, mode="lines", marker_color="black")
+
+        gaussian = GaussianNaiveBayes()
+        lda = LDA()
+        gaussian._fit(X, Y)
+        lda._fit(X, Y)
+
+        GNB_y_pred = gaussian._predict(X)
+        LDA_y_pred = lda.predict(X)
+
+        from IMLearn.metrics import accuracy
+        GNB_pred_accuracy = accuracy(GNB_y_pred, Y)
+        LDA_pred_accuracy = accuracy(LDA_y_pred, Y)
 
         # Plot a figure with two suplots, showing the Gaussian Naive Bayes predictions on the left and LDA predictions
         # on the right. Plot title should specify dataset used and subplot titles should specify algorithm and accuracy
-        from IMLearn.metrics import accuracy
-        raise NotImplementedError()
 
+        fig_1 = px.scatter(x=X[:, 0], y=X[:, 1], color=np.reshape(Y, newshape=(len(Y))), title=f"Real data")
+        fig_1.show()
+        fig_2 = px.scatter(x=X[:, 0], y=X[:, 1], color=GNB_y_pred,
+                         title=f"Data colored by GNB prediction. data name: {f} Accuracy: {GNB_pred_accuracy}")
+        fig_2.show()
+        fig_3 = px.scatter(x=X[:, 0], y=X[:, 1], color=LDA_y_pred,
+                                 title=f"Data colored by LDA prediction. data name: {f} Accuracy: {LDA_pred_accuracy}")
+        fig_3.show()
+
+        # all_fig = make_subplots(rows=1, cols=3)
+        # all_fig.add_trace(fig_1, col=1, row=1)
+        # all_fig.add_trace(fig_2, col=2, row=1)
+        # all_fig.add_trace(fig_3, col=3, row=1)
+        # all_fig.show()
 
 if __name__ == '__main__':
     np.random.seed(0)
-    run_perceptron()
-    exit()
+    # run_perceptron()
     compare_gaussian_classifiers()
