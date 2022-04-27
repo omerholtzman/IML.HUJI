@@ -1,9 +1,12 @@
 from IMLearn.learners.classifiers import Perceptron, LDA, GaussianNaiveBayes
+from IMLearn.learners.classifiers.perceptron import default_callback
 import numpy as np
 from typing import Tuple
 import plotly.graph_objects as go
 import plotly.io as pio
 from plotly.subplots import make_subplots
+
+import matplotlib.pyplot as plt
 pio.templates.default = "simple_white"
 
 
@@ -26,8 +29,10 @@ def load_dataset(filename: str) -> Tuple[np.ndarray, np.ndarray]:
         Class vector specifying for each sample its class
 
     """
-    raise NotImplementedError()
-
+    data = np.load(filename)
+    X = data[:, [0, 1]]
+    Y = data[: , [2]]
+    return X, Y
 
 def run_perceptron():
     """
@@ -38,15 +43,22 @@ def run_perceptron():
     """
     for n, f in [("Linearly Separable", "linearly_separable.npy"), ("Linearly Inseparable", "linearly_inseparable.npy")]:
         # Load dataset
-        raise NotImplementedError()
+        X, Y = load_dataset("../datasets/" + f)
 
         # Fit Perceptron and record loss in each fit iteration
         losses = []
-        raise NotImplementedError()
+        def our_callback(fit: Perceptron, x: np.ndarray, y: int):
+            losses.append(fit._loss(X, Y))
+        perceptron = Perceptron(callback=our_callback)
+
+        perceptron._fit(X, Y)
 
         # Plot figure
-        raise NotImplementedError()
-
+        plt.plot(list(range(1, len(losses) + 1)), losses)
+        plt.xlabel("Iteration number")
+        plt.ylabel("Misclassification Loss")
+        plt.title(n)
+        plt.show()
 
 def compare_gaussian_classifiers():
     """
@@ -54,7 +66,7 @@ def compare_gaussian_classifiers():
     """
     for f in ["gaussian1.npy", "gaussian2.npy"]:
         # Load dataset
-        raise NotImplementedError()
+        X, Y = load_dataset("./datasets/" + f)
 
         # Fit models and predict over training set
         raise NotImplementedError()
@@ -68,4 +80,5 @@ def compare_gaussian_classifiers():
 if __name__ == '__main__':
     np.random.seed(0)
     run_perceptron()
+    exit()
     compare_gaussian_classifiers()

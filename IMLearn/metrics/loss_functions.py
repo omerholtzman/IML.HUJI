@@ -16,6 +16,7 @@ def mean_square_error(y_true: np.ndarray, y_pred: np.ndarray) -> float:
     -------
     MSE of given predictions
     """
+    __check_labels_sizes(y_pred, y_true)
     sum_squared_error = np.sum(np.power(y_true - y_pred, 2))
     return sum_squared_error / len(y_true)
 
@@ -37,7 +38,9 @@ def misclassification_error(y_true: np.ndarray, y_pred: np.ndarray, normalize: b
     -------
     Misclassification of given predictions
     """
-    raise NotImplementedError()
+    __check_labels_sizes(y_pred, y_true)
+    misses = np.sum([True if y_true[index] != y_pred[index] else False for index in range(len(y_true))])
+    return misses / len(y_true) if normalize else misses
 
 
 def accuracy(y_true: np.ndarray, y_pred: np.ndarray) -> float:
@@ -55,8 +58,15 @@ def accuracy(y_true: np.ndarray, y_pred: np.ndarray) -> float:
     -------
     Accuracy of given predictions
     """
-    raise NotImplementedError()
+    __check_labels_sizes(y_pred, y_true)
+    misses = np.sum([True if y_true[index] == y_pred[index] else False for index in range(len(y_true))])
+    return misses / len(y_true)
 
+
+def __check_labels_sizes(y_pred, y_true):
+    if len(y_true) != len(y_pred):
+        raise Exception(f"predicted labels and true label are different in their sizes."
+                        f" func: {misclassification_error.__name__}")
 
 def cross_entropy(y_true: np.ndarray, y_pred: np.ndarray) -> float:
     """

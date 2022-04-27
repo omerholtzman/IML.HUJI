@@ -2,8 +2,6 @@ from IMLearn.utils import split_train_test
 from IMLearn.learners.regressors import LinearRegression
 from IMLearn.metrics.loss_functions import mean_square_error
 
-# TODO: remove tqdm
-from tqdm import tqdm
 from typing import NoReturn
 import numpy as np
 import pandas as pd
@@ -109,7 +107,7 @@ def activate_linear_regressor(X_train, Y_train, X_test, Y_test):
     iterations = 10
     mean_list, std_list = [], []
     model = LinearRegression()
-    for percent in tqdm(range(10, 101)):
+    for percent in (range(10, 101)):
         data_length = int(len(X_train) * percent / 100)
         current_performance = []
         for _ in range(iterations):
