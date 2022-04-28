@@ -54,18 +54,22 @@ class LDA(BaseEstimator):
             else:
                 self.data_by_classes[str(y[index][0])] = [sample]
 
-        self.classes_, self.mu_, self.cov_, self._cov_inv, self.pi_ = [], [], [], [], []
+        self.classes_, self.mu_, self.cov_, self._cov_inv, self.pi_ = \
+            [], [], np.zeros((len(self.data_by_classes.keys()), X.shape[1])), [], []
 
-        def calculate_cov(X, mu):
-            return np.sum([np.matmul(np.transpose([X[i] - mu]), [X[i] - mu]) for i in range(len(X))], axis=0)
+        mu_by_y = {}
+        def calculate_cov(X, y):
+            return np.sum([np.matmul(np.transpose([X[i] - mu_by_y[str(y[i][0])]]), [X[i] - mu_by_y[str(y[i][0])]]) for i in range(len(X))], axis=0)
 
-        for key in self.data_by_classes.keys():
+        for index, key in enumerate(self.data_by_classes.keys()):
             self.classes_.append(key)
             n_k = len(self.data_by_classes[key])
-            self.mu_.append(1 / (n_k - 1) * np.sum(self.data_by_classes[key], axis=0))
-            self.cov_.append(1 / (len(X) - len(self.data_by_classes.keys())) * calculate_cov(X, self.mu_[-1]))
-            self._cov_inv.append(np.linalg.inv(self.cov_[-1]))
-            self.pi_.append(n_k / (len(y) - 1))
+            self.mu_.append(1 / (n_k) * np.sum(self.data_by_classes[key], axis=0))
+            mu_by_y[key] = self.mu_[-1]
+            self.pi_.append(n_k / len(y))
+
+        self.cov_ = np.reshape((1 / (len(y) - len(self.data_by_classes.keys())) * calculate_cov(X, y)), (len(X[0]), len(X[0])))
+        self._cov_inv.append(np.linalg.inv(self.cov_))
 
         self.fitted_ = True
 
@@ -117,13 +121,9 @@ class LDA(BaseEstimator):
         return likehood_matrix
 
     def __compute_likehood_per_sample(self, sample, class_col):
-        a_k = np.dot(np.transpose(self._cov_inv[class_col]), self.mu_[class_col])
-        b_k = np.log(self.pi_[class_col]) - 0.5 * np.dot(np.transpose(self.mu_[class_col]), a_k)
-        return np.dot(np.transpose(a_k), sample) + b_k
-
-        # return np.log2(self.pi_[class_col]) - 0.5 * np.log2(np.linalg.det(self.cov_[class_col])) - 0.5 * \
-        #        np.log2(np.dot(np.dot(np.transpose(sample - self.mu_[class_col]), self._cov_inv[class_col]),
-        #                       (sample - self.mu_[class_col])))
+        a_k = np.dot(self._cov_inv, np.transpose(self.mu_[class_col]))
+        b_k = np.log(self.pi_[class_col]) - 0.5 * np.dot(self.mu_[class_col], np.transpose(a_k))
+        return np.dot(a_k, np.transpose(sample)) + b_k
 
     def _loss(self, X: np.ndarray, y: np.ndarray) -> float:
         """

@@ -109,22 +109,23 @@ def compare_gaussian_classifiers():
         # Plot a figure with two suplots, showing the Gaussian Naive Bayes predictions on the left and LDA predictions
         # on the right. Plot title should specify dataset used and subplot titles should specify algorithm and accuracy
 
-        fig_1 = px.scatter(x=X[:, 0], y=X[:, 1], color=np.reshape(Y, newshape=(len(Y))), title=f"Real data")
-        fig_1.show()
-        fig_2 = px.scatter(x=X[:, 0], y=X[:, 1], color=GNB_y_pred,
-                         title=f"Data colored by GNB prediction. data name: {f} Accuracy: {GNB_pred_accuracy}")
-        fig_2.show()
-        fig_3 = px.scatter(x=X[:, 0], y=X[:, 1], color=LDA_y_pred,
-                                 title=f"Data colored by LDA prediction. data name: {f} Accuracy: {LDA_pred_accuracy}")
-        fig_3.show()
+        fig = make_subplots(rows=1, cols=3, subplot_titles=
+        (f"GNB model. accuracy = {GNB_pred_accuracy}", f"LDA model. accuracy = {LDA_pred_accuracy}", "True Data"))
 
-        # all_fig = make_subplots(rows=1, cols=3)
-        # all_fig.add_trace(fig_1, col=1, row=1)
-        # all_fig.add_trace(fig_2, col=2, row=1)
-        # all_fig.add_trace(fig_3, col=3, row=1)
-        # all_fig.show()
+        fig.add_trace(go.Scatter(x=X[:, 0], y=X[:, 1],marker=dict(color=GNB_y_pred), mode="markers"),row=1, col=1)
+        fig.add_trace(go.Scatter(x=X[:, 0], y=X[:, 1],marker=dict(color=LDA_y_pred), mode="markers"),row=1, col=2)
+        fig.add_trace(go.Scatter(x=X[:, 0], y=X[:, 1],marker=dict(color=np.reshape(Y, newshape=len(Y))), mode="markers"),row=1, col=3)
+
+        for i in range(len(gaussian.mu_)):
+            fig.add_trace(get_ellipse(gaussian.mu_[i], np.diag(gaussian.vars_[i])), row=1, col=1)
+            fig.add_trace(get_ellipse(lda.mu_[i], lda.cov_), row=1, col=2)
+
+        fig.add_trace(go.Scatter(x=np.asarray([lda.mu_[i][0] for i in range(len(lda.mu_))]), y=np.asarray([lda.mu_[i][1] for i in range(len(lda.mu_))]), mode="markers", marker = dict(color = "black", symbol='x', size=10)), row=1, col=2)
+        fig.add_trace(go.Scatter(x=np.asarray([gaussian.mu_[i][0] for i in range(len(gaussian.mu_))]), y=np.asarray([gaussian.mu_[i][1] for i in range(len(gaussian.mu_))]), mode="markers", marker = dict(color = "black", symbol='x', size=10)), row=1, col=1)
+        fig.show()
+
 
 if __name__ == '__main__':
     np.random.seed(0)
-    # run_perceptron()
+    run_perceptron()
     compare_gaussian_classifiers()

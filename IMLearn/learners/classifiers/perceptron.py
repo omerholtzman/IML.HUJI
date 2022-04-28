@@ -86,20 +86,19 @@ class Perceptron(BaseEstimator):
         -----
         Fits model with or without an intercept depending on value of `self.fit_intercept_`
         """
-        # TODO: remove the progress bar
-        from tqdm import tqdm
 
         if self.include_intercept_:
             X = np.concatenate((np.ones((len(X), 1)), X), axis=1)
         self.coefs_ = np.zeros(len(X[0]))
-        for _ in tqdm(range(self.max_iter_)):
+        for _ in range(self.max_iter_):
             improved = False
             for index, x in enumerate(X):
                 if y[index] * np.dot(np.asarray(self.coefs_).transpose(), x) <= 0:
                     improved = True
                     self.coefs_ = [self.coefs_[i] + (y[index] * x[i]) for i in range(len(x))]
                     self.callback_(self, np.asarray([]), 0)
-                    continue
+                if improved:
+                    break
             if not improved:
                 break
 
